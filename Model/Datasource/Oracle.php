@@ -775,7 +775,7 @@ class Oracle extends DboSource {
 			}
 			$name = "$model.$field";
 		} else {
-			if (1 || $name[0] == "_") {
+			if ($name !== '*') {
 				$name = "\"$name\"";
 			}
 		}
