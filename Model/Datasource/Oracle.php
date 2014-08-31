@@ -942,7 +942,7 @@ class Oracle extends DboSource {
  * @return integer
  * @access public
  */
-	function lastInsertId($source) {
+	function lastInsertId($source = null) {
 		$sequence = $this->_sequenceMap[$source];
 		$sql = "SELECT $sequence.currval FROM dual";
 
