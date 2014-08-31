@@ -1027,8 +1027,8 @@ class Oracle extends DboSource {
 /**
  * Enter description here...
  *
- * @param Model $model
- * @param unknown_type $linkModel
+ * @param Model $Model
+ * @param unknown_type $LinkModel
  * @param string $type Association type
  * @param unknown_type $association
  * @param unknown_type $assocData
@@ -1039,11 +1039,10 @@ class Oracle extends DboSource {
  * @param array $stack
  */
 	function queryAssociation(Model $Model, Model $LinkModel, $type, $association, $assocData, &$queryData, $external, &$resultSet, $recursive, $stack) {
-	//function queryAssociation(&$model, &$linkModel, $type, $association, $assocData, &$queryData, $external = false, &$resultSet, $recursive, $stack) {
-		if ($query = $this->generateAssociationQuery($model, $linkModel, $type, $association, $assocData, $queryData, $external, $resultSet)) {
+		if ($query = $this->generateAssociationQuery($Model, $LinkModel, $type, $association, $assocData, $queryData, $external, $resultSet)) {
 			if (!isset($resultSet) || !is_array($resultSet)) {
 				if (Configure::read() > 0) {
-					echo '<div style = "font: Verdana bold 12px; color: #FF0000">' . sprintf(__('SQL Error in model %s:', true), $model->alias) . ' ';
+					echo '<div style = "font: Verdana bold 12px; color: #FF0000">' . sprintf(__('SQL Error in model %s:', true), $Model->alias) . ' ';
 					if (isset($this->error) && $this->error != null) {
 						echo $this->error;
 					}
@@ -1056,7 +1055,7 @@ class Oracle extends DboSource {
 			if ($type === 'hasMany' && (!isset($assocData['limit']) || empty($assocData['limit']))) {
 				$ins = $fetch = array();
 				for ($i = 0; $i < $count; $i++) {
-					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $model, $stack)) {
+					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $Model, $stack)) {
 						$ins[] = $in;
 					}
 				}
@@ -1067,7 +1066,7 @@ class Oracle extends DboSource {
 					foreach ($ins as $i) {
 						$q = str_replace('{$__cakeID__$}', implode(', ', $i), $query);
 						$q = str_replace('= (', 'IN (', $q);
-						$res = $this->fetchAll($q, $model->cacheQueries, $model->alias);
+						$res = $this->fetchAll($q, $Model->cacheQueries, $Model->alias);
 						$fetch = array_merge($fetch, $res);
 					}
 				}
@@ -1075,34 +1074,34 @@ class Oracle extends DboSource {
 				if (!empty($fetch) && is_array($fetch)) {
 					if ($recursive > 0) {
 
-						foreach ($linkModel->__associations as $type1) {
-							foreach ($linkModel->{$type1} as $assoc1 => $assocData1) {
-								$deepModel =& $linkModel->{$assoc1};
+						foreach ($LinkModel->__associations as $type1) {
+							foreach ($LinkModel->{$type1} as $assoc1 => $assocData1) {
+								$deepModel =& $LinkModel->{$assoc1};
 								$tmpStack = $stack;
 								$tmpStack[] = $assoc1;
 
-								if ($linkModel->useDbConfig === $deepModel->useDbConfig) {
+								if ($LinkModel->useDbConfig === $deepModel->useDbConfig) {
 									$db =& $this;
 								} else {
 									$db =& ConnectionManager::getDataSource($deepModel->useDbConfig);
 								}
-								$db->queryAssociation($linkModel, $deepModel, $type1, $assoc1, $assocData1, $queryData, true, $fetch, $recursive - 1, $tmpStack);
+								$db->queryAssociation($LinkModel, $deepModel, $type1, $assoc1, $assocData1, $queryData, true, $fetch, $recursive - 1, $tmpStack);
 							}
 						}
 					}
 				}
-				return $this->_mergeHasMany($resultSet, $fetch, $association, $model, $linkModel, $recursive);
+				return $this->_mergeHasMany($resultSet, $fetch, $association, $Model, $LinkModel, $recursive);
 			} elseif ($type === 'hasAndBelongsToMany') {
 				$ins = $fetch = array();
 				for ($i = 0; $i < $count; $i++) {
-					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $model, $stack)) {
+					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $Model, $stack)) {
 						$ins[] = $in;
 					}
 				}
 
-				$foreignKey = $model->hasAndBelongsToMany[$association]['foreignKey'];
-				$joinKeys = array($foreignKey, $model->hasAndBelongsToMany[$association]['associationForeignKey']);
-				list($with, $habtmFields) = $model->joinModel($model->hasAndBelongsToMany[$association]['with'], $joinKeys);
+				$foreignKey = $Model->hasAndBelongsToMany[$association]['foreignKey'];
+				$joinKeys = array($foreignKey, $Model->hasAndBelongsToMany[$association]['associationForeignKey']);
+				list($with, $habtmFields) = $Model->joinModel($Model->hasAndBelongsToMany[$association]['with'], $joinKeys);
 				$habtmFieldsCount = count($habtmFields);
 
 				if (!empty($ins)) {
@@ -1113,9 +1112,9 @@ class Oracle extends DboSource {
 						$q = str_replace('= (', 'IN (', $q);
 						$q = str_replace('  WHERE 1 = 1', '', $q);
 
-						$q = $this->insertQueryData($q, null, $association, $model, $stack);
+						$q = $this->insertQueryData($q, null, $association, $Model, $stack);
 						if ($q != false) {
-							$res = $this->fetchAll($q, $model->cacheQueries, $model->alias);
+							$res = $this->fetchAll($q, $Model->cacheQueries, $Model->alias);
 							$fetch = array_merge($fetch, $res);
 						}
 					}
@@ -1126,9 +1125,9 @@ class Oracle extends DboSource {
 				$row =& $resultSet[$i];
 
 				if ($type !== 'hasAndBelongsToMany') {
-					$q = $this->insertQueryData($query, $resultSet[$i], $association, $model, $stack);
+					$q = $this->insertQueryData($query, $resultSet[$i], $association, $Model, $stack);
 					if ($q != false) {
-						$fetch = $this->fetchAll($q, $model->cacheQueries, $model->alias);
+						$fetch = $this->fetchAll($q, $Model->cacheQueries, $Model->alias);
 					} else {
 						$fetch = null;
 					}
@@ -1137,19 +1136,19 @@ class Oracle extends DboSource {
 				if (!empty($fetch) && is_array($fetch)) {
 					if ($recursive > 0) {
 
-						foreach ($linkModel->__associations as $type1) {
-							foreach ($linkModel->{$type1} as $assoc1 => $assocData1) {
+						foreach ($LinkModel->__associations as $type1) {
+							foreach ($LinkModel->{$type1} as $assoc1 => $assocData1) {
 
-								$deepModel =& $linkModel->{$assoc1};
-								if (($type1 === 'belongsTo') || ($deepModel->alias === $model->alias && $type === 'belongsTo') || ($deepModel->alias != $model->alias)) {
+								$deepModel =& $LinkModel->{$assoc1};
+								if (($type1 === 'belongsTo') || ($deepModel->alias === $Model->alias && $type === 'belongsTo') || ($deepModel->alias != $Model->alias)) {
 									$tmpStack = $stack;
 									$tmpStack[] = $assoc1;
-									if ($linkModel->useDbConfig == $deepModel->useDbConfig) {
+									if ($LinkModel->useDbConfig == $deepModel->useDbConfig) {
 										$db =& $this;
 									} else {
 										$db =& ConnectionManager::getDataSource($deepModel->useDbConfig);
 									}
-									$db->queryAssociation($linkModel, $deepModel, $type1, $assoc1, $assocData1, $queryData, true, $fetch, $recursive - 1, $tmpStack);
+									$db->queryAssociation($LinkModel, $deepModel, $type1, $assoc1, $assocData1, $queryData, true, $fetch, $recursive - 1, $tmpStack);
 								}
 							}
 						}
@@ -1157,7 +1156,7 @@ class Oracle extends DboSource {
 					if ($type == 'hasAndBelongsToMany') {
 						$merge = array();
 						foreach($fetch as $j => $data) {
-							if (isset($data[$with]) && $data[$with][$foreignKey] === $row[$model->alias][$model->primaryKey]) {
+							if (isset($data[$with]) && $data[$with][$foreignKey] === $row[$Model->alias][$Model->primaryKey]) {
 								if ($habtmFieldsCount > 2) {
 									$merge[] = $data;
 								} else {
@@ -1173,7 +1172,7 @@ class Oracle extends DboSource {
 					} else {
 						$this->_mergeAssociation($resultSet[$i], $fetch, $association, $type);
 					}
-					$resultSet[$i][$association] = $linkModel->afterfind($resultSet[$i][$association]);
+					$resultSet[$i][$association] = $LinkModel->afterfind($resultSet[$i][$association]);
 
 				} else {
 					$tempArray[0][$association] = false;
