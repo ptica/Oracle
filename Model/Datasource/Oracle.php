@@ -188,9 +188,9 @@ class Oracle extends DboSource {
 		$config['charset'] = !empty($config['charset']) ? $config['charset'] : null;
 
 		if (!$config['persistent']) {
-			$this->connection = ocilogon($config['login'], $config['password'], $config['database'], $config['charset']);
+			$this->connection = oci_connect($config['login'], $config['password'], $config['database'], $config['charset']);
 		} else {
-			$this->connection = ociplogon($config['login'], $config['password'], $config['database'], $config['charset']);
+			$this->connection = oci_pconnect($config['login'], $config['password'], $config['database'], $config['charset']);
 		}
 
 		if ($this->connection) {
@@ -217,9 +217,9 @@ class Oracle extends DboSource {
  */
 	function _setError($source = null, $clear = false) {
 		if ($source) {
-			$e = ocierror($source);
+			$e = oci_error($source);
 		} else {
-			$e = ocierror();
+			$e = oci_error();
 		}
 		$this->_error = $e['message'];
 		if ($clear) {
@@ -265,7 +265,7 @@ class Oracle extends DboSource {
  */
 	function disconnect() {
 		if ($this->connection) {
-			$this->connected = !ocilogoff($this->connection);
+			$this->connected = !oci_close($this->connection);
 			return !$this->connected;
 		}
 	}
@@ -352,7 +352,7 @@ class Oracle extends DboSource {
  * @access protected
  */
 	function _execute($sql) {
-		$this->_statementId = ociparse($this->connection, $sql);
+		$this->_statementId = oci_parse($this->connection, $sql);
 		if (!$this->_statementId) {
 			$this->_setError($this->connection);
 			return false;
@@ -364,14 +364,14 @@ class Oracle extends DboSource {
 			$mode = OCI_COMMIT_ON_SUCCESS;
 		}
 
-		if (!ociexecute($this->_statementId, $mode)) {
+		if (!oci_execute($this->_statementId, $mode)) {
 			$this->_setError($this->_statementId);
 			return false;
 		}
 
 		$this->_setError(null, true);
 
-		switch(ocistatementtype($this->_statementId)) {
+		switch(oci_statement_type($this->_statementId)) {
 			case 'DESCRIBE':
 			case 'SELECT':
 				$this->_scrapeSQL($sql);
@@ -382,11 +382,11 @@ class Oracle extends DboSource {
 		}
 
 		if ($this->_limit >= 1) {
-			ocisetprefetch($this->_statementId, $this->_limit);
+			oci_set_prefetch($this->_statementId, $this->_limit);
 		} else {
-			ocisetprefetch($this->_statementId, 3000);
+			oci_set_prefetch($this->_statementId, 3000);
 		}
-		$this->_numRows = ocifetchstatement($this->_statementId, $this->_results, $this->_offset, $this->_limit, OCI_NUM | OCI_FETCHSTATEMENT_BY_ROW);
+		$this->_numRows = oci_fetch_all($this->_statementId, $this->_results, $this->_offset, $this->_limit, OCI_NUM | OCI_FETCHSTATEMENT_BY_ROW);
 		$this->_currentRow = 0;
 		$this->limit();
 		return $this->_statementId;
@@ -400,7 +400,7 @@ class Oracle extends DboSource {
  */
 	function fetchRow() {
 		if ($this->_currentRow >= $this->_numRows) {
-			#ocifreestatement($this->_statementId);
+			#oci_free_statement($this->_statementId);
 			$this->_statementId = null;
 			$this->_map = null;
 			$this->_results = null;
@@ -799,7 +799,7 @@ class Oracle extends DboSource {
  * or a transaction has not started).
  */
 	function rollback() {
-		return ocirollback($this->connection);
+		return oci_rollback($this->connection);
 	}
 
 /**
@@ -812,7 +812,7 @@ class Oracle extends DboSource {
  */
 	function commit() {
 		$this->__transactionStarted = false;
-		return ocicommit($this->connection);
+		return oci_commit($this->connection);
 	}
 
 /**
@@ -874,7 +874,7 @@ class Oracle extends DboSource {
  * @access public
  */
 	function value($data, $column = null, $safe = false) {
-		
+
 		if (is_array($data) && !empty($data)) {
 			return array_map(
 				array(&$this, 'value'),
@@ -913,10 +913,10 @@ class Oracle extends DboSource {
 			default:
 				if ($data === '') {
 					return 'NULL';
-				
+
 				} elseif (is_float($data)) {
 					return str_replace(',', '.', strval($data));
-				
+
 				} elseif ((is_int($data) || $data === '0') || (
 					is_numeric($data) && strpos($data, ',') === false &&
 					$data[0] != '0' && strpos($data, 'e') === false)
@@ -969,7 +969,7 @@ class Oracle extends DboSource {
  * @access public
  */
 	function lastAffected() {
-		return $this->_statementId ? ocirowcount($this->_statementId): false;
+		return $this->_statementId ? oci_num_rows($this->_statementId): false;
 	}
 
 /**
@@ -1198,7 +1198,7 @@ class Oracle extends DboSource {
 			}
 			return $out;
 		}
-                
+
                 function hasResult()
                 {
                     return true;
