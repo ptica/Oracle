@@ -163,6 +163,20 @@ class Oracle extends DboSource {
 	var $_sequenceMap = array();
 
 /**
+ * The starting character that this DataSource uses for quoted identifiers.
+ *
+ * @var string
+ */
+	public $startQuote = '"';
+
+/**
+ * The ending character that this DataSource uses for quoted identifiers.
+ *
+ * @var string
+ */
+	public $endQuote = '"';
+
+/**
  * Connects to the database using options in the given configuration array.
  *
  * @return boolean True if the database could be connected, else false
@@ -174,9 +188,9 @@ class Oracle extends DboSource {
 		$config['charset'] = !empty($config['charset']) ? $config['charset'] : null;
 
 		if (!$config['persistent']) {
-			$this->connection = @ocilogon($config['login'], $config['password'], $config['database'], $config['charset']);
+			$this->connection = ocilogon($config['login'], $config['password'], $config['database'], $config['charset']);
 		} else {
-			$this->connection = @ociplogon($config['login'], $config['password'], $config['database'], $config['charset']);
+			$this->connection = ociplogon($config['login'], $config['password'], $config['database'], $config['charset']);
 		}
 
 		if ($this->connection) {
@@ -338,7 +352,7 @@ class Oracle extends DboSource {
  * @access protected
  */
 	function _execute($sql) {
-		$this->_statementId = @ociparse($this->connection, $sql);
+		$this->_statementId = ociparse($this->connection, $sql);
 		if (!$this->_statementId) {
 			$this->_setError($this->connection);
 			return false;
@@ -350,7 +364,7 @@ class Oracle extends DboSource {
 			$mode = OCI_COMMIT_ON_SUCCESS;
 		}
 
-		if (!@ociexecute($this->_statementId, $mode)) {
+		if (!ociexecute($this->_statementId, $mode)) {
 			$this->_setError($this->_statementId);
 			return false;
 		}
@@ -386,7 +400,8 @@ class Oracle extends DboSource {
  */
 	function fetchRow() {
 		if ($this->_currentRow >= $this->_numRows) {
-			ocifreestatement($this->_statementId);
+			#ocifreestatement($this->_statementId);
+			$this->_statementId = null;
 			$this->_map = null;
 			$this->_results = null;
 			$this->_currentRow = null;
@@ -505,7 +520,7 @@ class Oracle extends DboSource {
 		}
 
 		$sql = 'SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH FROM all_tab_columns WHERE table_name = \'';
-		$sql .= strtoupper($this->fullTableName($model)) . '\'';
+		$sql .= str_replace('"', '', $this->fullTableName($model)). '\'';
 
 		if (!$this->execute($sql)) {
 			return false;
@@ -750,11 +765,13 @@ class Oracle extends DboSource {
 	function name($name) {
 		if (strpos($name, '.') !== false && strpos($name, '"') === false) {
 			list($model, $field) = explode('.', $name);
-			if ($field[0] == "_") {
-				$name = "$model.\"$field\"";
+			$model = "\"$model\"";
+			if (1 || $field[0] == "_") {
+				$field = "\"$field\"";
 			}
+			$name = "$model.$field";
 		} else {
-			if ($name[0] == "_") {
+			if (1 || $name[0] == "_") {
 				$name = "\"$name\"";
 			}
 		}
@@ -857,37 +874,59 @@ class Oracle extends DboSource {
  * @access public
  */
 	function value($data, $column = null, $safe = false) {
-		/*
-		$parent = parent::value($data, $column, $safe);
-
-		if ($parent != null) {
-			return $parent;
+		
+		if (is_array($data) && !empty($data)) {
+			return array_map(
+				array(&$this, 'value'),
+				$data, array_fill(0, count($data), $column)
+			);
+		} elseif (is_object($data) && isset($data->type, $data->value)) {
+			if ($data->type == 'identifier') {
+				return $this->name($data->value);
+			} elseif ($data->type == 'expression') {
+				return $data->value;
+			}
+		} elseif (in_array($data, array('{$__cakeID__$}', '{$__cakeForeignKey__$}'), true)) {
+			return $data;
 		}
-		*/
 
-		if ($data === null) {
+		if ($data === null || (is_array($data) && empty($data))) {
 			return 'NULL';
 		}
 
-		if ($data === '') {
-			return  "''";
+		if (empty($column)) {
+			$column = $this->introspectType($data);
 		}
 
-		switch($column) {
+
+		switch ($column) {
 			case 'date':
 				$data = date('Y-m-d H:i:s', strtotime($data));
 				$data = "TO_DATE('$data', 'YYYY-MM-DD HH24:MI:SS')";
-			break;
+				break;
+			case 'binary':
 			case 'integer' :
 			case 'float' :
-			case null :
-				if (is_numeric($data)) {
-					break;
-				}
+			case 'boolean':
+			case 'string':
+			case 'text':
 			default:
+				if ($data === '') {
+					return 'NULL';
+				
+				} elseif (is_float($data)) {
+					return str_replace(',', '.', strval($data));
+				
+				} elseif ((is_int($data) || $data === '0') || (
+					is_numeric($data) && strpos($data, ',') === false &&
+					$data[0] != '0' && strpos($data, 'e') === false)
+				) {
+					return $data;
+				}
 				$data = str_replace("'", "''", $data);
 				$data = "'$data'";
-			break;
+				return $data;
+				break;
 		}
 		return $data;
 	}
@@ -1010,7 +1049,7 @@ class Oracle extends DboSource {
 			if ($type === 'hasMany' && (!isset($assocData['limit']) || empty($assocData['limit']))) {
 				$ins = $fetch = array();
 				for ($i = 0; $i < $count; $i++) {
-					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $assocData, $model, $linkModel, $stack)) {
+					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $model, $stack)) {
 						$ins[] = $in;
 					}
 				}
@@ -1045,11 +1084,11 @@ class Oracle extends DboSource {
 						}
 					}
 				}
-				return $this->__mergeHasMany($resultSet, $fetch, $association, $model, $linkModel, $recursive);
+				return $this->_mergeHasMany($resultSet, $fetch, $association, $model, $linkModel, $recursive);
 			} elseif ($type === 'hasAndBelongsToMany') {
 				$ins = $fetch = array();
 				for ($i = 0; $i < $count; $i++) {
-					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $assocData, $model, $linkModel, $stack)) {
+					if ($in = $this->insertQueryData('{$__cakeID__$}', $resultSet[$i], $association, $model, $stack)) {
 						$ins[] = $in;
 					}
 				}
@@ -1067,7 +1106,7 @@ class Oracle extends DboSource {
 						$q = str_replace('= (', 'IN (', $q);
 						$q = str_replace('  WHERE 1 = 1', '', $q);
 
-						$q = $this->insertQueryData($q, null, $association, $assocData, $model, $linkModel, $stack);
+						$q = $this->insertQueryData($q, null, $association, $model, $stack);
 						if ($q != false) {
 							$res = $this->fetchAll($q, $model->cacheQueries, $model->alias);
 							$fetch = array_merge($fetch, $res);
@@ -1080,7 +1119,7 @@ class Oracle extends DboSource {
 				$row =& $resultSet[$i];
 
 				if ($type !== 'hasAndBelongsToMany') {
-					$q = $this->insertQueryData($query, $resultSet[$i], $association, $assocData, $model, $linkModel, $stack);
+					$q = $this->insertQueryData($query, $resultSet[$i], $association, $model, $stack);
 					if ($q != false) {
 						$fetch = $this->fetchAll($q, $model->cacheQueries, $model->alias);
 					} else {
@@ -1122,16 +1161,16 @@ class Oracle extends DboSource {
 						if (empty($merge) && !isset($row[$association])) {
 							$row[$association] = $merge;
 						} else {
-							$this->__mergeAssociation($resultSet[$i], $merge, $association, $type);
+							$this->_mergeAssociation($resultSet[$i], $merge, $association, $type);
 						}
 					} else {
-						$this->__mergeAssociation($resultSet[$i], $fetch, $association, $type);
+						$this->_mergeAssociation($resultSet[$i], $fetch, $association, $type);
 					}
 					$resultSet[$i][$association] = $linkModel->afterfind($resultSet[$i][$association]);
 
 				} else {
 					$tempArray[0][$association] = false;
-					$this->__mergeAssociation($resultSet[$i], $tempArray, $association, $type);
+					$this->_mergeAssociation($resultSet[$i], $tempArray, $association, $type);
 				}
 			}
 		}
