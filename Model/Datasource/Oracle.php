@@ -338,9 +338,10 @@ class Oracle extends DboSource {
  * this returns false.
  *
  * @return integer Number of rows in resultset
+ * @param mixed $source Not used
  * @access public
  */
-	function lastNumRows() {
+	function lastNumRows($source = null) {
 		return $this->_numRows;
 	}
 
@@ -348,10 +349,12 @@ class Oracle extends DboSource {
  * Executes given SQL statement. This is an overloaded method.
  *
  * @param string $sql SQL statement
+ * @param array $params list of params to be bound to query NOT IMPLEMENTED !!!
+ * @param array $prepareOptions Options to be used in the prepare statement NOT IMPLEMENTED !!!
  * @return resource Result resource identifier or null
  * @access protected
  */
-	function _execute($sql) {
+	function _execute($sql, $params = array(), $prepareOptions = array()) {
 		$this->_statementId = oci_parse($this->connection, $sql);
 		if (!$this->_statementId) {
 			$this->_setError($this->connection);
@@ -396,9 +399,10 @@ class Oracle extends DboSource {
  * Fetch result row
  *
  * @return array
+ * @param string $sql Some SQL to be executed. WE DO NOT DO LAZY execute YET !!!
  * @access public
  */
-	function fetchRow() {
+	function fetchRow($sql = NULL) {
 		if ($this->_currentRow >= $this->_numRows) {
 			#oci_free_statement($this->_statementId);
 			$this->_statementId = null;
@@ -472,13 +476,13 @@ class Oracle extends DboSource {
 	}
 
 /**
- * Returns an array of tables in the database. If there are no tables, an error is
- * raised and the application exits.
+ * Caches/returns cached results for child instances
  *
+ * @param mixed $data Unused in this class.
  * @return array tablenames in the database
  * @access public
  */
-	function listSources() {
+	function listSources($data = null) {
 		$cache = parent::listSources();
 		if ($cache != null) {
 			return $cache;
@@ -504,7 +508,7 @@ class Oracle extends DboSource {
  * @return array Fields in table. Keys are name and type
  * @access public
  */
-	public function describe(&$model) {
+	public function describe($model) {
 		$table = $this->fullTableName($model, false);
 
 		if (!empty($model->sequence)) {
@@ -956,9 +960,10 @@ class Oracle extends DboSource {
  * Returns a formatted error message from previous database operation.
  *
  * @return string Error message with error number
+ * @param PDOStatement $query the query to extract the error from if any - NOT ON PDO YET !!!
  * @access public
  */
-	function lastError() {
+	function lastError(PDOStatement $query = null) {
 		return $this->_error;
 	}
 
@@ -966,9 +971,10 @@ class Oracle extends DboSource {
  * Returns number of affected rows in previous database operation. If no previous operation exists, this returns false.
  *
  * @return int Number of affected rows
+ * @param mixed $source The source to check.
  * @access public
  */
-	function lastAffected() {
+	function lastAffected($source = null) {
 		return $this->_statementId ? oci_num_rows($this->_statementId): false;
 	}
 
@@ -1032,7 +1038,8 @@ class Oracle extends DboSource {
  * @param integer $recursive Number of levels of association
  * @param array $stack
  */
-	function queryAssociation(&$model, &$linkModel, $type, $association, $assocData, &$queryData, $external = false, &$resultSet, $recursive, $stack) {
+	function queryAssociation(Model $Model, Model $LinkModel, $type, $association, $assocData, &$queryData, $external, &$resultSet, $recursive, $stack) {
+	//function queryAssociation(&$model, &$linkModel, $type, $association, $assocData, &$queryData, $external = false, &$resultSet, $recursive, $stack) {
 		if ($query = $this->generateAssociationQuery($model, $linkModel, $type, $association, $assocData, $queryData, $external, $resultSet)) {
 			if (!isset($resultSet) || !is_array($resultSet)) {
 				if (Configure::read() > 0) {
@@ -1179,16 +1186,12 @@ class Oracle extends DboSource {
 /**
  * Generate a "drop table" statement for the given Schema object
  *
- * @param object $schema An instance of a subclass of CakeSchema
+ * @param CakeSchema $schema An instance of a subclass of CakeSchema
  * @param string $table Optional.  If specified only the table name given will be generated.
  *						Otherwise, all tables defined in the schema are generated.
  * @return string
  */
-		function dropSchema($schema, $table = null) {
-			if (!is_a($schema, 'CakeSchema')) {
-				trigger_error(__('Invalid schema object', true), E_USER_WARNING);
-				return null;
-			}
+		function dropSchema(CakeSchema $schema, $table = null) {
 			$out = '';
 
 			foreach ($schema->tables as $curTable => $columns) {
