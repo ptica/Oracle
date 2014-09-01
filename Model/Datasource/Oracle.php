@@ -435,6 +435,68 @@ class Oracle extends DboSource {
 	}
 
 /**
+ * Inserts multiple values into a table
+ *
+ * @param string $table The table being inserted into.
+ * @param array $fields The array of field/column names being inserted.
+ * @param array $values The array of values to insert. The values should
+ *   be an array of rows. Each row should have values keyed by the column name.
+ *   Each row must have the values in the same order as $fields.
+ * @return bool
+ */
+	public function insertMulti($table, $fields, $values) {
+		$table = $this->fullTableName($table);
+		//$holder = implode(',', array_fill(0, count($fields), '?'));
+		$holder = implode(', ', array_map(function($n) { return sprintf(':my%d', $n); },  array_keys($fields)));
+		$fields = implode(', ', $fields);
+
+		/*$pdoMap = array(
+			'integer' => PDO::PARAM_INT,
+			'float' => PDO::PARAM_STR,
+			'boolean' => PDO::PARAM_BOOL,
+			'string' => PDO::PARAM_STR,
+			'text' => PDO::PARAM_STR
+		);
+		$columnMap = array(); */
+
+		$sql = "INSERT INTO {$table} ({$fields}) VALUES ({$holder})";
+		$statement = oci_parse($this->connection, $sql);
+		// TODO check transactions
+		$this->begin();
+
+		/*foreach ($values[key($values)] as $key => $val) {
+			$type = $this->introspectType($val);
+			$columnMap[$key] = $pdoMap[$type];
+		}*/
+
+		foreach ($values as $value) {
+			$i = 0;
+			foreach ($value as $col => $val) {
+				//$statement->bindValue($i, $val, $columnMap[$col]);
+				$val = (int) $val;
+				// HAS TO BE $value[$col] as oracle binds the php ref!
+				oci_bind_by_name($statement, ':my'.$col, $value[$col]); 
+				$i += 1;
+			}
+			//$statement->execute();
+			$res = oci_execute($statement);
+			// TODO  $statement->closeCursor();
+			if (!$res) {
+				return false;
+			}
+
+			if ($this->fullDebug) {
+				$this->logQuery($sql, $value);
+			}
+		}
+		oci_free_statement($statement);
+		return true;
+		//return $this->commit();
+	}
+
+
+
+/**
  * Checks to see if a named sequence exists
  *
  * @param string $sequence
