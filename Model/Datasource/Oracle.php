@@ -1004,7 +1004,7 @@ class Oracle extends DboSource {
  */
 	function lastInsertId($source = null) {
 		$sequence = $this->_sequenceMap[$source];
-		$sql = "SELECT $sequence.currval FROM dual";
+		$sql = "SELECT \"$sequence\".currval FROM dual";
 
 		if (!$this->execute($sql)) {
 			return false;
