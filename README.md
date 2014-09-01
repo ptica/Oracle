@@ -1,6 +1,5 @@
 Fork of https://bitbucket.org/odin88/cakephp-2.0-oracle
 
-for starte
 will see how it fares
 
 * [x] adding composer.json
