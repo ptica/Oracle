@@ -827,16 +827,18 @@ class Oracle extends DboSource {
  * @access public
  */
 	function name($name) {
-		if (strpos($name, '.') !== false && strpos($name, '"') === false) {
-			list($model, $field) = explode('.', $name);
-			$model = "\"$model\"";
-			if (1 || $field[0] == "_") {
-				$field = "\"$field\"";
-			}
-			$name = "$model.$field";
-		} else {
-			if ($name !== '*') {
-				$name = "\"$name\"";
+		if (strpos($name, '"') === false) {
+			if (strpos($name, '.') !== false) {
+				list($model, $field) = explode('.', $name);
+				$model = "\"$model\"";
+				if (1 || $field[0] == "_") {
+					$field = "\"$field\"";
+				}
+				$name = "$model.$field";
+			} else {
+				if ($name !== '*') {
+					$name = "\"$name\"";
+				}
 			}
 		}
 		return $name;
