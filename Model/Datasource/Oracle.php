@@ -569,6 +569,11 @@ class Oracle extends DboSource {
  * @access public
  */
 	public function describe($model) {
+		$key = $this->fullTableName($model, false);
+		$cache = parent::describe($key);
+		if ($cache) {
+			return $cache;
+		}
 		$table = $this->fullTableName($model, false);
 
 		if (!empty($model->sequence)) {
@@ -577,14 +582,7 @@ class Oracle extends DboSource {
 			$this->_sequenceMap[$table] = $model->table . '_seq';
 		}
 
-		$cache = parent::describe($model);
-
-		if ($cache != null) {
-			return $cache;
-		}
-
-		$sql = 'SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH FROM all_tab_columns WHERE table_name = \'';
-		$sql .= str_replace('"', '', $this->fullTableName($model)). '\'';
+		$sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH FROM all_tab_columns WHERE table_name = '$table'";
 
 		if (!$this->execute($sql)) {
 			return false;
@@ -598,7 +596,7 @@ class Oracle extends DboSource {
 				'length'=> $row[0]['DATA_LENGTH']
 			);
 		}
-		#$this->__cacheDescription($this->fullTableName($model, false), $fields);
+		$this->_cacheDescription($this->fullTableName($model, false), $fields);
 
 		return $fields;
 	}
