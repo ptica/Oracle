@@ -805,15 +805,29 @@ class Oracle extends DboSource {
 								if (!isset($col['name'])) {
 									$col['name'] = $field;
 								}
-								$colList[] = 'CHANGE '. $this->name($field).' '.$this->buildColumn($col);
+								// remove the not null statement if needed
+								// as Oracle forbids setting NOT NULL if the constraint is already there!
+								if (isset($col['null']) && $col['null'] === $this->_has_null_flag($curTable, $col['name'])) {
+									unset($col['null']);
+								}
+								$colList[] = 'MODIFY ('.$this->buildColumn($col).')';
 							}
 						break;
 					}
 				}
-				$out .= "\t" . implode(",\n\t", $colList) . ";\n\n";
+				$out .= "\t" . implode(",\n\t", $colList) . "\n\n";
 			}
 		}
 		return $out;
+	}
+
+	function _has_null_flag($table, $column) {
+		$sql = "SELECT NULLABLE FROM all_tab_columns WHERE table_name='$table' AND column_name='$column'";
+		if ($this->execute($sql)) {
+			$row = $this->fetchRow();
+			return $row[0]['NULLABLE'] === 'Y';
+		}
+		return false;
 	}
 
 /**
