@@ -63,15 +63,15 @@ class Oracle extends DboSource {
 	var $columns = array(
 		'primary_key' => array('name' => ''),
 		'string' => array('name' => 'varchar2', 'limit' => '255'),
-		'text' => array('name' => 'varchar2'),
-		'integer' => array('name' => 'number'),
+		'text' => array('name' => 'varchar2', 'limit' => '4000'),
+		'integer' => array('name' => 'number', 'limit' => '11'),
 		'float' => array('name' => 'float'),
 		'datetime' => array('name' => 'date', 'format' => 'Y-m-d H:i:s'),
 		'timestamp' => array('name' => 'date', 'format' => 'Y-m-d H:i:s'),
 		'time' => array('name' => 'date', 'format' => 'Y-m-d H:i:s'),
 		'date' => array('name' => 'date', 'format' => 'Y-m-d H:i:s'),
 		'binary' => array('name' => 'bytea'),
-		'boolean' => array('name' => 'boolean'),
+		'boolean' => array('name' => 'number', 'limit'=>'1'),
 		'number' => array('name' => 'number'),
 		'inet' => array('name' => 'inet'));
 
