@@ -1083,6 +1083,11 @@ class Oracle extends DboSource {
 				return "DELETE FROM {$table} {$aliases}{$conditions}";
 			break;
 			case 'schema':
+				// filter KEY indexes as oracle seems not to support KEY definition during create table
+				// TODO: should create the key somehow
+				$indexes = array_filter($indexes, function ($value) {
+					return preg_match("/^PRIMARY/", $value);
+				});
 				foreach (array('columns', 'indexes') as $var) {
 					if (is_array(${$var})) {
 						${$var} = "\t" . implode(",\n\t", array_filter(${$var}));
