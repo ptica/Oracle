@@ -570,16 +570,18 @@ class Oracle extends DboSource {
  */
 	public function describe($model) {
 		$key = $this->fullTableName($model, false);
-		$cache = parent::describe($key);
-		if ($cache) {
-			return $cache;
-		}
 		$table = $this->fullTableName($model, false);
 
+		// set sequence name
 		if (!empty($model->sequence)) {
 			$this->_sequenceMap[$table] = $model->sequence;
 		} elseif (!empty($model->table)) {
 			$this->_sequenceMap[$table] = $model->table . '_seq';
+		}
+		
+		$cache = parent::describe($key);
+		if ($cache) {
+			return $cache;
 		}
 
 		$sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH FROM all_tab_columns WHERE table_name = '$table'";
