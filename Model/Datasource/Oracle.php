@@ -593,7 +593,7 @@ class Oracle extends DboSource {
 		$fields = array();
 
 		for ($i = 0; $row = $this->fetchRow(); $i++) {
-			$fields[strtolower($row[0]['COLUMN_NAME'])] = array(
+			$fields[$row[0]['COLUMN_NAME']] = array(
 				'type'=> $this->column($row[0]['DATA_TYPE']),
 				'length'=> $row[0]['DATA_LENGTH']
 			);
