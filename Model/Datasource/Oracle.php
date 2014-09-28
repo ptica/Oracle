@@ -1358,7 +1358,7 @@ class Oracle extends DboSource {
 						if ($keys === array_values($keys)) {
 							$count = count($value);
 							if ($count === 1 && !preg_match('/\s+(?:NOT|\!=)$/', $key)) {
-								$data = $this->_quoteFields($key) . ' = (';
+								$data = $this->_quoteFields($key) . ' IN (';
 								if ($quoteValues) {
 									if ($Model !== null) {
 										$columnType = $Model->getColumnType($key);
