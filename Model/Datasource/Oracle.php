@@ -309,7 +309,7 @@ class Oracle extends DboSource {
 			$e = explode('.', $f);
 			if (count($e) > 1) {
 				$table = $e[0];
-				$field = strtolower($e[1]);
+				$field = $e[1];
 			} else {
 				$table = 0;
 				$field = $e[0];
@@ -555,7 +555,7 @@ class Oracle extends DboSource {
 		$sources = array();
 
 		while($r = $this->fetchRow()) {
-			$sources[] = strtolower($r[0]['name']);
+			$sources[] = $r[0]['name'];
 		}
 		parent::listSources($sources);
 		return $sources;
@@ -790,7 +790,7 @@ class Oracle extends DboSource {
 							foreach($column as $field => $col) {
 								$col['name'] = $field;
 								$alter = 'ADD '.$this->buildColumn($col);
-								if (isset($col['after'])) {
+								if (0 && isset($col['after'])) {
 									$alter .= ' AFTER '. $this->name($col['after']);
 								}
 								$colList[] = $alter;
@@ -911,7 +911,7 @@ class Oracle extends DboSource {
 			}
 			return $col;
 		} else {
-			$real = strtolower($real);
+			//$real = strtolower($real);
 		}
 		$col = str_replace(')', '', $real);
 		$limit = null;
