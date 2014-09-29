@@ -587,7 +587,7 @@ class Oracle extends DboSource {
 			return $cache;
 		}
 
-		$sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH FROM all_tab_columns WHERE table_name = '$table'";
+		$sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, DATA_PRECISION FROM all_tab_columns WHERE table_name = '$table'";
 
 		if (!$this->execute($sql)) {
 			return false;
@@ -597,14 +597,24 @@ class Oracle extends DboSource {
 
 		for ($i = 0; $row = $this->fetchRow(); $i++) {
 			$fields[$row[0]['COLUMN_NAME']] = array(
-				'type'=> $this->column($row[0]['DATA_TYPE']),
-				'length'=> $row[0]['DATA_LENGTH']
+				//'type'=> $this->column($row[0]['DATA_TYPE']),
+				'type'=> $this->column($this->_describe_format($row[0])),
+				'length'=> $row[0]['DATA_LENGTH'],
 			);
 		}
 		$this->_cacheDescription($this->fullTableName($model, false), $fields);
 
 		return $fields;
 	}
+	protected function _describe_format($col) {
+		$type   = $col['DATA_TYPE'];
+		$length = $col['DATA_LENGTH'];
+		if ($type == 'NUMBER') {
+			$length = $col['DATA_PRECISION'];
+			return "$type($length)";
+		}
+		return $type;
+	}	
 
 /**
  * Deletes all the records in a table and drops all associated auto-increment sequences.
@@ -926,6 +936,9 @@ class Oracle extends DboSource {
 
 		if (in_array($col, array('date', 'timestamp'))) {
 			return $col;
+		}
+		if ($col == 'number' && $limit == 1) {
+			return 'boolean';
 		}
 		if (strpos($col, 'number') !== false) {
 			return 'integer';
