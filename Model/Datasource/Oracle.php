@@ -491,9 +491,9 @@ class Oracle extends DboSource {
 				$this->logQuery($sql, $value);
 			}
 		}
+		return $this->commit();
 		oci_free_statement($statement);
 		return true;
-		//return $this->commit();
 	}
 
 
