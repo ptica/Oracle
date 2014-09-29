@@ -1391,4 +1391,32 @@ class Oracle extends DboSource {
 			}
 			return $out;
 		}
+
+		/**
+		 * Quotes Model.fields
+		 *
+		 * @param string $conditions The conditions to quote.
+		 * @return string or false if no match
+		 */
+		protected function _quoteFields($conditions) {
+			$start = $end = null;
+			$original = $conditions;
+			
+			if (!empty($this->startQuote)) {
+				$start = preg_quote($this->startQuote);
+			}
+			if (!empty($this->endQuote)) {
+				$end = preg_quote($this->endQuote);
+			}
+			$conditions = str_replace(array($start, $end), '', $conditions);
+			$conditions = preg_replace_callback(
+				'/(?:[\'\"][^\'\"\\\]*(?:\\\.[^\'\"\\\]*)*[\'\"])|([a-z0-9_][a-z0-9\\-_]*\\.[a-z0-9_][a-z0-9_\\-]*)/i',
+				array(&$this, '_quoteMatchedField'),
+				$conditions
+			);
+			if ($conditions !== null) {
+				return $conditions;
+			}
+			return $original;
+		}
 }
