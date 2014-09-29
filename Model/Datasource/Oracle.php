@@ -309,6 +309,8 @@ class Oracle extends DboSource {
 			$e = explode('.', $f);
 			if (count($e) > 1) {
 				$table = $e[0];
+				// here used to be a strtolower call
+				// https://github.com/ptica/Oracle/commit/aacb1fe7df0bf5315ef8d35eb6105468a46fb54b
 				$field = $e[1];
 			} else {
 				$table = 0;
@@ -555,7 +557,8 @@ class Oracle extends DboSource {
 		$sources = array();
 
 		while($r = $this->fetchRow()) {
-			$sources[] = $r[0]['name'];
+			// list of all views and tables - not sure if it has to be strlowered
+			$sources[] = strtolower($r[0]['name']);
 		}
 		parent::listSources($sources);
 		return $sources;
@@ -911,7 +914,9 @@ class Oracle extends DboSource {
 			}
 			return $col;
 		} else {
-			//$real = strtolower($real);
+			// column type names
+			// behaviour is broken without strtolower
+			$real = strtolower($real);
 		}
 		$col = str_replace(')', '', $real);
 		$limit = null;
