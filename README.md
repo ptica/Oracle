@@ -4,9 +4,9 @@ will see how it fares
 
 * [x] adding composer.json
 * [x] reading & saving associations
-* [ ] delete problems
+* [x] delete problems
 * [ ] transactions problems
-* [ ] caching problems
+* [x] caching problems
 
 I configure the connection as:
 
