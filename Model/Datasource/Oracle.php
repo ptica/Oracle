@@ -812,7 +812,7 @@ class Oracle extends DboSource {
 						case 'drop':
 							foreach($column as $field => $col) {
 								$col['name'] = $field;
-								$colList[] = 'DROP '.$this->name($field);
+								$colList[] = 'DROP COLUMN '.$this->name($field);
 							}
 						break;
 						case 'change':
