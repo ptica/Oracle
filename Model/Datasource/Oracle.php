@@ -423,6 +423,11 @@ class Oracle extends DboSource {
 				$resultRow[$table][$column] = $this->_results[$this->_currentRow][$index];
 			}
 		}
+
+		if (isset($resultRow[0])) {
+			$this->fetchVirtualField($resultRow);
+		}
+
 		$this->_currentRow++;
 		return $resultRow;
 	}
