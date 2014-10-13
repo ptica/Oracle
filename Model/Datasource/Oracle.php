@@ -1409,4 +1409,21 @@ class Oracle extends DboSource {
 			}
 			return $out;
 		}
+
+/**
+ * Auxiliary function to quote matches `Model.fields` from a preg_replace_callback call
+ *
+ * @param string $match matched string
+ * @return string quoted string
+ */
+        protected function _quoteMatchedField($match) {
+		if (preg_match('/^\'.*\'$/', $match[0])) {
+			// do not quote single quoted expressions
+			return $match[0];
+		}
+                if (is_numeric($match[0])) {
+                        return $match[0];
+                }
+                return $this->name($match[0]);
+        }
 }
