@@ -1129,7 +1129,9 @@ class Oracle extends DboSource {
 	}
 
 /**
- * Enter description here...
+ * ptica; OVERLOADED FOR NO OBVIOUS REASON
+ *        + out of sync now, causes https://github.com/ptica/Oracle/issues/15
+ *        = switching out for now
  *
  * @param Model $Model
  * @param unknown_type $LinkModel
@@ -1142,7 +1144,7 @@ class Oracle extends DboSource {
  * @param integer $recursive Number of levels of association
  * @param array $stack
  */
-	function queryAssociation(Model $Model, Model $LinkModel, $type, $association, $assocData, &$queryData, $external, &$resultSet, $recursive, $stack) {
+	function queryAssociation_SEEMS_OUDATED(Model $Model, Model $LinkModel, $type, $association, $assocData, &$queryData, $external, &$resultSet, $recursive, $stack) {
 		if ($query = $this->generateAssociationQuery($Model, $LinkModel, $type, $association, $assocData, $queryData, $external, $resultSet)) {
 			if (!isset($resultSet) || !is_array($resultSet)) {
 				if (Configure::read() > 0) {
