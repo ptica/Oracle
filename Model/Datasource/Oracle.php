@@ -592,7 +592,10 @@ class Oracle extends DboSource {
 			return $cache;
 		}
 
-		$sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, DATA_PRECISION FROM all_tab_columns WHERE table_name = '$table'";
+		$dbLink    = isset($model->oracleDbLink) ? '@'.$model->oracleDbLink : '';
+		$tableName = isset($model->oracleSrcTable) ? $model->oracleSrcTable : $table;
+
+		$sql = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, DATA_PRECISION FROM all_tab_columns$dbLink WHERE table_name = '$tableName'";
 
 		if (!$this->execute($sql)) {
 			return false;
