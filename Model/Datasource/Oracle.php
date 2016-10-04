@@ -278,6 +278,15 @@ class Oracle extends DboSource {
  */
 	function _scrapeSQL($sql) {
 		$sql = str_replace("\"", '', $sql);
+
+		if (1) {
+			// in Common Table Expression there are way more selects
+			// we care only about the final select
+			// workaround:
+			$selectParts = preg_split('/\SELECT\b/', $sql);
+			$sql = array_pop($selectParts);
+		}
+
 		$preFrom = preg_split('/\bFROM\b/', $sql);
 		$preFrom = $preFrom[0];
 		$find = array('SELECT');
@@ -622,7 +631,7 @@ class Oracle extends DboSource {
 			return "$type($length)";
 		}
 		return $type;
-	}	
+	}
 
 /**
  * Deletes all the records in a table and drops all associated auto-increment sequences.
