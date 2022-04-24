@@ -1019,12 +1019,14 @@ class Oracle extends DboSource {
 				$data = date('Y-m-d H:i:s', strtotime($data));
 				$data = "TO_DATE('$data', 'YYYY-MM-DD HH24:MI:SS')";
 				break;
+			case 'string':
+			case 'text':
+				$data = "'".$data."'";
+				break;
 			case 'binary':
 			case 'integer' :
 			case 'float' :
 			case 'boolean':
-			case 'string':
-			case 'text':
 			default:
 				if ($data === '') {
 					return 'NULL';
